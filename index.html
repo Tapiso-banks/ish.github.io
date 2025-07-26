@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Notes and Question Paper Request Form</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    pre {
+        background-color: #f4f4f4;
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+    <h2 class="text-2xl font-bold mb-6 text-center">Request Notes & Question Papers</h2>
+    <form id="request-form" class="space-y-4">
+      <div>
+        <label for="school" class="block text-sm font-medium text-gray-700">School</label>
+        <input type="text" id="school" name="school" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Enter your school" required>
+      </div>
+      <div>
+        <label for="grade" class="block text-sm font-medium text-gray-700">Grade</label>
+        <select id="grade" name="grade" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" required>
+          <option value="" disabled selected>Select your grade</option>
+          <option value="1">Grade 1</option>
+          <option value="2">Grade 2</option>
+          <option value="3">Grade 3</option>
+          <option value="4">Grade 4</option>
+          <option value="5">Grade 5</option>
+          <option value="6">Grade 6</option>
+          <option value="7">Grade 7</option>
+          <option value="8">Grade 8</option>
+          <option value="9">Grade 9</option>
+          <option value="10">Grade 10</option>
+          <option value="11">Grade 11</option>
+          <option value="12">Grade 12</option>
+        </select>
+      </div>
+      <div>
+        <label for="subject" class="block text-sm font-medium text-gray-700">Subject</label>
+        <input type="text" id="subject" name="subject" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Enter subject (e.g., Math)" required>
+      </div>
+      <div>
+        <label for="topic" class="block text-sm font-medium text-gray-700">Topic</label>
+        <input type="text" id="topic" name="topic" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Enter specific topic (e.g., Algebra, Photosynthesis)" required>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Question Paper Format</label>
+        <div class="mt-2 space-y-2">
+          <label class="inline-flex items-center">
+            <input type="checkbox" name="format" value="Structured" class="form-checkbox">
+            <span class="ml-2">Structured</span>
+          </label>
+          <label class="inline-flex items-center">
+            <input type="checkbox" name="format" value="Short" class="form-checkbox">
+            <span class="ml-2">Short Answer</span>
+          </label>
+          <label class="inline-flex items-center">
+            <input type="checkbox" name="format" value="True/False" class="form-checkbox">
+            <span class="ml-2">True/False</span>
+          </label>
+          <label class="inline-flex items-center">
+            <input type="checkbox" name="format" value="Fill in the Blank" class="form-checkbox">
+            <span class="ml-2">Fill in the Blank</span>
+          </label>
+          <label class="inline-flex items-center">
+            <input type="checkbox" name="format" value="Mixed" class="form-checkbox">
+            <span class="ml-2">Mixed (Combination)</span>
+          </label>
+        </div>
+      </div>
+      <div>
+        <label for="notes_pages" class="block text-sm font-medium text-gray-700">Desired Notes Length (Approx. Pages)</label>
+        <input type="number" id="notes_pages" name="notes_pages" min="1" max="20" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" value="5" required>
+      </div>
+      <div>
+        <label for="papers_pages" class="block text-sm font-medium text-gray-700">Desired Question Paper Length (Approx. Pages)</label>
+        <input type="number" id="papers_pages" name="papers_pages" min="1" max="10" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" value="2" required>
+      </div>
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700">Your Email (for delivery)</label>
+        <input type="email" id="email" name="email" class="mt-1 block w-full p-2 border border-gray-300 rounded-md" placeholder="Enter your email" required>
+      </div>
+      <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">Submit Request</button>
+    </form>
+    <p id="form-message" class="mt-4 text-center text-green-600 hidden">Request sent successfully! Check your email.</p>
+    <p id="form-error" class="mt-4 text-center text-red-600 hidden">Error sending request. Please try again.</p>
+  </div>
+
+  <!-- EmailJS SDK v4 - Latest version -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  
+  <script>
+    // Initialize EmailJS when the page loads
+    (function() {
+      emailjs.init({
+        publicKey: "SZtnPFlIhtW6GmA5z"
+      });
+      console.log('EmailJS initialized successfully');
+    })();
+
+    document.getElementById("request-form").addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const formats = Array.from(document.querySelectorAll('input[name="format"]:checked'))
+        .map(input => input.value)
+        .join(", ") || "None selected";
+
+      const formData = {
+        school: document.getElementById("school").value,
+        grade: document.getElementById("grade").value,
+        subject: document.getElementById("subject").value,
+        topic: document.getElementById("topic").value,
+        format: formats,
+        notes_pages: document.getElementById("notes_pages").value,
+        papers_pages: document.getElementById("papers_pages").value,
+        email: document.getElementById("email").value
+      };
+
+      const submitButton = document.querySelector('#request-form button[type="submit"]');
+      submitButton.textContent = "Sending Request...";
+      submitButton.disabled = true;
+      document.getElementById("form-message").classList.add("hidden");
+      document.getElementById("form-error").classList.add("hidden");
+
+      const backendUrl = "https://student-helper-ndlk.onrender.com/api/generate";
+
+      fetch(backendUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      })
+      .then(res => {
+          if (!res.ok) {
+              return res.json().then(errData => Promise.reject(errData));
+          }
+          return res.json();
+      })
+      .then(data => {
+        if (data.generatedText) {
+          const templateParams = {
+            to_email: formData.email,
+            from_school: formData.school,
+            from_grade: formData.grade,
+            from_subject: formData.subject,
+            from_topic: formData.topic,
+            generated_content: data.generatedText
+          };
+
+          // Use the new EmailJS v4 syntax with publicKey in options
+          emailjs.send('service_h4lqsa6', 'template_7tnvgw1', templateParams, {
+            publicKey: 'SZtnPFlIhtW6GmA5z'
+          })
+          .then(function(response) {
+            console.log('EmailJS Success!', response.status, response.text);
+            document.getElementById("form-message").classList.remove("hidden");
+            document.getElementById("form-error").classList.add("hidden");
+            document.getElementById("request-form").reset();
+          }, function(error) {
+            console.error('EmailJS Failed...', error);
+            document.getElementById("form-error").textContent = "Error sending email via EmailJS. Please check your EmailJS setup.";
+            document.getElementById("form-error").classList.remove("hidden");
+            document.getElementById("form-message").classList.add("hidden");
+          });
+
+        } else {
+          console.error("Backend did not return generated content.");
+          document.getElementById("form-error").textContent = "Error processing request: No content received from backend.";
+          document.getElementById("form-error").classList.remove("hidden");
+          document.getElementById("form-message").classList.add("hidden");
+        }
+      })
+      .catch(err => {
+        console.error("Frontend fetch error or backend general error:", err);
+        const errorMessage = err.error ? err.error : "Error sending request. Please check your inputs and try again.";
+        document.getElementById("form-error").textContent = errorMessage;
+        document.getElementById("form-error").classList.remove("hidden");
+        document.getElementById("form-message").classList.add("hidden");
+      })
+      .finally(() => {
+          submitButton.textContent = "Submit Request";
+          submitButton.disabled = false;
+      });
+    });
+  </script>
+</body>
+</html>
