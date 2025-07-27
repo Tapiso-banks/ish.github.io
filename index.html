@@ -12,6 +12,20 @@
         border-radius: 5px;
         overflow-x: auto;
     }
+    .loading-spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 2s linear infinite;
+      display: inline-block;
+      margin-right: 10px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
@@ -87,8 +101,15 @@
       </div>
       <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">Submit Request</button>
     </form>
-    <p id="form-message" class="mt-4 text-center text-green-600 hidden">Request sent successfully! Check your email.</p>
+    <p id="form-message" class="mt-4 text-center text-green-600 hidden">Request sent successfully! Check your email for the PDF.</p>
     <p id="form-error" class="mt-4 text-center text-red-600 hidden">Error sending request. Please try again.</p>
+    
+    <!-- Download link for generated PDF -->
+    <div id="download-section" class="mt-4 text-center hidden">
+      <a id="download-link" href="#" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 inline-block">
+        Download PDF
+      </a>
+    </div>
   </div>
 
   <!-- EmailJS SDK v4 - Latest version -->
@@ -102,6 +123,17 @@
       });
       console.log('EmailJS initialized successfully');
     })();
+
+    // Helper function to convert base64 to blob
+    function base64ToBlob(base64, mimeType) {
+      const byteCharacters = atob(base64);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      return new Blob([byteArray], { type: mimeType });
+    }
 
     document.getElementById("request-form").addEventListener("submit", function (event) {
       event.preventDefault();
@@ -122,10 +154,12 @@
       };
 
       const submitButton = document.querySelector('#request-form button[type="submit"]');
-      submitButton.textContent = "Sending Request...";
+      const originalButtonText = submitButton.textContent;
+      submitButton.innerHTML = '<div class="loading-spinner"></div>Generating PDF...';
       submitButton.disabled = true;
       document.getElementById("form-message").classList.add("hidden");
       document.getElementById("form-error").classList.add("hidden");
+      document.getElementById("download-section").classList.add("hidden");
 
       const backendUrl = "https://student-helper-ndlk.onrender.com/api/generate";
 
@@ -143,17 +177,28 @@
           return res.json();
       })
       .then(data => {
-        if (data.generatedText) {
+        if (data.generatedText && data.pdfData) {
+          // Create download link for PDF
+          const pdfBlob = base64ToBlob(data.pdfData, 'application/pdf');
+          const pdfUrl = URL.createObjectURL(pdfBlob);
+          const downloadLink = document.getElementById('download-link');
+          downloadLink.href = pdfUrl;
+          downloadLink.download = data.filename || 'study_material.pdf';
+          document.getElementById("download-section").classList.remove("hidden");
+
+          // Prepare email with PDF attachment
           const templateParams = {
             to_email: formData.email,
             from_school: formData.school,
             from_grade: formData.grade,
             from_subject: formData.subject,
             from_topic: formData.topic,
-            generated_content: data.generatedText
+            generated_content: data.generatedText,
+            attachment_name: data.filename || 'study_material.pdf',
+            attachment_data: data.pdfData
           };
 
-          // Use the new EmailJS v4 syntax with publicKey in options
+          // Send email with PDF attachment using EmailJS
           emailjs.send('service_h4lqsa6', 'template_7tnvgw1', templateParams, {
             publicKey: 'SZtnPFlIhtW6GmA5z'
           })
@@ -164,13 +209,14 @@
             document.getElementById("request-form").reset();
           }, function(error) {
             console.error('EmailJS Failed...', error);
-            document.getElementById("form-error").textContent = "Error sending email via EmailJS. Please check your EmailJS setup.";
-            document.getElementById("form-error").classList.remove("hidden");
-            document.getElementById("form-message").classList.add("hidden");
+            // Even if email fails, user can still download the PDF
+            document.getElementById("form-message").textContent = "PDF generated successfully! Email delivery failed, but you can download the PDF below.";
+            document.getElementById("form-message").classList.remove("hidden");
+            document.getElementById("form-error").classList.add("hidden");
           });
 
         } else {
-          console.error("Backend did not return generated content.");
+          console.error("Backend did not return generated content or PDF data.");
           document.getElementById("form-error").textContent = "Error processing request: No content received from backend.";
           document.getElementById("form-error").classList.remove("hidden");
           document.getElementById("form-message").classList.add("hidden");
@@ -184,7 +230,7 @@
         document.getElementById("form-message").classList.add("hidden");
       })
       .finally(() => {
-          submitButton.textContent = "Submit Request";
+          submitButton.innerHTML = originalButtonText;
           submitButton.disabled = false;
       });
     });
