@@ -101,14 +101,20 @@
       </div>
       <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700">Submit Request</button>
     </form>
-    <p id="form-message" class="mt-4 text-center text-green-600 hidden">Request sent successfully! Check your email for the PDF.</p>
+    <p id="form-message" class="mt-4 text-center text-green-600 hidden">PDFs generated and sent successfully! Check your email.</p>
     <p id="form-error" class="mt-4 text-center text-red-600 hidden">Error sending request. Please try again.</p>
     
-    <!-- Download link for generated PDF -->
+    <!-- Download links for generated PDFs -->
     <div id="download-section" class="mt-4 text-center hidden">
-      <a id="download-link" href="#" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 inline-block">
-        Download PDF
-      </a>
+      <h3 class="text-lg font-semibold mb-2">Download Your PDFs:</h3>
+      <div class="space-y-2">
+        <a id="download-notes" href="#" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 inline-block w-full">
+          📚 Download Study Notes PDF
+        </a>
+        <a id="download-questions" href="#" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 inline-block w-full">
+          📝 Download Questions PDF
+        </a>
+      </div>
     </div>
   </div>
 
@@ -155,7 +161,7 @@
 
       const submitButton = document.querySelector('#request-form button[type="submit"]');
       const originalButtonText = submitButton.textContent;
-      submitButton.innerHTML = '<div class="loading-spinner"></div>Generating PDF...';
+      submitButton.innerHTML = '<div class="loading-spinner"></div>Generating PDFs...';
       submitButton.disabled = true;
       document.getElementById("form-message").classList.add("hidden");
       document.getElementById("form-error").classList.add("hidden");
@@ -177,28 +183,38 @@
           return res.json();
       })
       .then(data => {
-        if (data.generatedText && data.pdfData) {
-          // Create download link for PDF
-          const pdfBlob = base64ToBlob(data.pdfData, 'application/pdf');
-          const pdfUrl = URL.createObjectURL(pdfBlob);
-          const downloadLink = document.getElementById('download-link');
-          downloadLink.href = pdfUrl;
-          downloadLink.download = data.filename || 'study_material.pdf';
+        if (data.notesPdf && data.questionsPdf) {
+          // Create download links for both PDFs
+          const notesPdfBlob = base64ToBlob(data.notesPdf.data, 'application/pdf');
+          const questionsPdfBlob = base64ToBlob(data.questionsPdf.data, 'application/pdf');
+          
+          const notesUrl = URL.createObjectURL(notesPdfBlob);
+          const questionsUrl = URL.createObjectURL(questionsPdfBlob);
+          
+          const notesLink = document.getElementById('download-notes');
+          const questionsLink = document.getElementById('download-questions');
+          
+          notesLink.href = notesUrl;
+          notesLink.download = data.notesPdf.filename;
+          questionsLink.href = questionsUrl;
+          questionsLink.download = data.questionsPdf.filename;
+          
           document.getElementById("download-section").classList.remove("hidden");
 
-          // Prepare email with PDF attachment
+          // Prepare email template parameters with both PDF attachments
           const templateParams = {
             to_email: formData.email,
             from_school: formData.school,
             from_grade: formData.grade,
             from_subject: formData.subject,
             from_topic: formData.topic,
-            generated_content: data.generatedText,
-            attachment_name: data.filename || 'study_material.pdf',
-            attachment_data: data.pdfData
+            notes_filename: data.notesPdf.filename,
+            notes_pdf_data: data.notesPdf.data,
+            questions_filename: data.questionsPdf.filename,
+            questions_pdf_data: data.questionsPdf.data
           };
 
-          // Send email with PDF attachment using EmailJS
+          // Send email with both PDF attachments using EmailJS
           emailjs.send('service_h4lqsa6', 'template_7tnvgw1', templateParams, {
             publicKey: 'SZtnPFlIhtW6GmA5z'
           })
@@ -209,15 +225,15 @@
             document.getElementById("request-form").reset();
           }, function(error) {
             console.error('EmailJS Failed...', error);
-            // Even if email fails, user can still download the PDF
-            document.getElementById("form-message").textContent = "PDF generated successfully! Email delivery failed, but you can download the PDF below.";
+            // Even if email fails, user can still download the PDFs
+            document.getElementById("form-message").textContent = "PDFs generated successfully! Email delivery failed, but you can download the PDFs below.";
             document.getElementById("form-message").classList.remove("hidden");
             document.getElementById("form-error").classList.add("hidden");
           });
 
         } else {
-          console.error("Backend did not return generated content or PDF data.");
-          document.getElementById("form-error").textContent = "Error processing request: No content received from backend.";
+          console.error("Backend did not return PDF data.");
+          document.getElementById("form-error").textContent = "Error processing request: No PDF data received from backend.";
           document.getElementById("form-error").classList.remove("hidden");
           document.getElementById("form-message").classList.add("hidden");
         }
