@@ -12,7 +12,7 @@ const port = process.env.PORT || 3000;
 // --- CORS Configuration ---
 // This is critical to allow your GitHub Pages frontend to communicate with your Render backend.
 const corsOptions = {
-  origin: 'https://tapiso-banks.github.io/ish.github.io', // Your EXACT GitHub Pages URL
+  origin: 'https://tapiso-banks.github.io', // Your EXACT GitHub Pages URL
   methods: ['GET', 'POST'], // Allow both GET and POST requests
   allowedHeaders: ['Content-Type'], // Allow Content-Type header
   optionsSuccessStatus: 200 // For older browsers
